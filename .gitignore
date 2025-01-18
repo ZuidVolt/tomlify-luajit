@@ -1,0 +1,7 @@
+.clangd
+build/
+template/
+vscode/
+tomlify
+tomlify_bc.h
+*.o
