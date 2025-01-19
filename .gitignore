@@ -6,3 +6,5 @@ tomlify
 tomlify_bc.h
 .DS_Store
 *.o
+.vscode/
+.fake
