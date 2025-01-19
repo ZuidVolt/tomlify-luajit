@@ -151,11 +151,13 @@ local function copy_pyproject_toml(template_path, output_dir)
         error(create_error("FileNotFound", "Template not found"))
     end
 
+    ---@type boolean, table|nil
     local ok, err = FileSystem.verify_file_health(template_path)
-    if not ok then error(err) end
+    if not ok and err then error(err) end
 
+    ---@type boolean, table|nil
     ok, err = FileSystem.verify_permissions(template_path)
-    if not ok then error(err) end
+    if not ok and err then error(err) end
 
     if C.access(dest_path, R_OK) == 0 then
         io.write("pyproject.toml already exists. Overwrite? (y/N): ")
