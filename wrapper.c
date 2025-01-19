@@ -16,31 +16,31 @@ static void print_error(const char* msg) {
 }
 
 int main(int argc, char* argv[]) {
-    lua_State* L = luaL_newstate();
-    if(!L) {
+    lua_State* lua_state = luaL_newstate();
+    if(!lua_state) {
         print_error("Failed to create Lua state");
         return EXIT_FAILURE;
     }
 
-    luaL_openlibs(L);
+    luaL_openlibs(lua_state);
 
     // Pre-allocate table with known size
-    lua_createtable(L, argc, 0);
+    lua_createtable(lua_state, argc, 0);
     for(int i = 0; i < argc; i++) {
-        lua_pushstring(L, argv[i]);
-        lua_rawseti(L, -2, i);
+        lua_pushstring(lua_state, argv[i]);
+        lua_rawseti(lua_state, -2, i);
     }
-    lua_setglobal(L, "arg");
+    lua_setglobal(lua_state, "arg");
 
     // Load and run the embedded bytecode
-    if(luaL_loadbuffer(L, (const char*) luaJIT_BC_tomlify, sizeof(luaJIT_BC_tomlify), "=tomlify") ||
-       lua_pcall(L, 0, 0, 0)) {
-        const char* error_msg = lua_tostring(L, -1);
+    if(luaL_loadbuffer(lua_state, (const char*) luaJIT_BC_tomlify, sizeof(luaJIT_BC_tomlify), "=tomlify") ||
+       lua_pcall(lua_state, 0, 0, 0)) {
+        const char* error_msg = lua_tostring(lua_state, -1);
         print_error(error_msg ? error_msg : "Unknown error");
-        lua_close(L);
+        lua_close(lua_state);
         return EXIT_FAILURE;
     }
 
-    lua_close(L);
+    lua_close(lua_state);
     return EXIT_SUCCESS;
 }
