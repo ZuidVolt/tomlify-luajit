@@ -1,5 +1,10 @@
 #!/usr/bin/env luajit
 local ffi = require("ffi")
+---@diagnostic disable: undefined-global
+local jit = jit or {} -- Fallback if not running on LuaJIT
+if jit.opt then       -- Only optimize if running on LuaJIT
+    jit.opt.start("maxmcode=1024", "maxtrace=1000")
+end
 local C = ffi.C
 
 -- Optimize JIT
