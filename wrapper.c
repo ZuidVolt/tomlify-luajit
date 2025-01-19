@@ -7,63 +7,68 @@
 
 #include "tomlify_bc.h"
 
-static void print_error(const char* msg) {
-    if(!msg) {
-        msg = "Unknown error (null message)";
+static void print_error(const char* const MSG) {
+    if(!MSG) {
+        const char* const DEFAULT_MSG = "Unknown error (null message)";
+        if(fprintf(stderr, "Error: %s\n", DEFAULT_MSG) < 0) {
+            abort();
+        }
+        return;
     }
-    if(fprintf(stderr, "Error: %s\n", msg) < 0) {
+    if(fprintf(stderr, "Error: %s\n", MSG) < 0) {
         abort();
     }
 }
 
-static void check_stack(lua_State* lua, int needed) {
-    if(!lua) {
+static void check_stack(lua_State* const LUA, const int NEEDED) {
+    if(!LUA) {
         return;
     }
-    if(lua_checkstack(lua, needed) == 0) {
+    if(lua_checkstack(LUA, NEEDED) == 0) {
         print_error("Lua stack overflow");
-        lua_close(lua);
+        lua_close(LUA);
         exit(EXIT_FAILURE);
     }
 }
 
-static int init_lua_state(lua_State** state) {
-    *state = luaL_newstate();
-    if(!*state) {
+static int init_lua_state(lua_State** const STATE) {
+    *STATE = luaL_newstate();
+    if(!*STATE) {
         print_error("Failed to create Lua state");
         return 0;
     }
     return 1;
 }
 
-static void setup_arg_table(lua_State* lua, int argc, char* argv[]) {
-    check_stack(lua, argc + 2);
-    lua_createtable(lua, argc, 0);
+static void setup_arg_table(lua_State* const LUA, const int ARGC, char* const ARGV[]) {
+    check_stack(LUA, ARGC + 2);
+    lua_createtable(LUA, ARGC, 0);
 
-    for(int i = 0; i < argc; i++) {
-        if(!argv[i]) {
+    for(int i = 0; i < ARGC; i++) {
+        if(!ARGV[i]) {
             print_error("Null argument encountered");
-            lua_close(lua);
+            lua_close(LUA);
             exit(EXIT_FAILURE);
         }
-        lua_pushstring(lua, argv[i]);
-        lua_rawseti(lua, -2, i);
+        lua_pushstring(LUA, ARGV[i]);
+        lua_rawseti(LUA, -2, i);
     }
 
-    lua_setglobal(lua, "arg");
+    lua_setglobal(LUA, "arg");
 }
 
-static int run_bytecode(lua_State* lua) {
+static int run_bytecode(lua_State* LUA) {
     if(sizeof(luaJIT_BC_tomlify) == 0) {
         print_error("Invalid bytecode data");
         return 0;
     }
 
-    int load_result = luaL_loadbuffer(lua, (const char*) luaJIT_BC_tomlify, sizeof(luaJIT_BC_tomlify), "=tomlify");
+    const int LOAD_RESULT =
+        luaL_loadbuffer(LUA, (const char*) luaJIT_BC_tomlify, sizeof(luaJIT_BC_tomlify), "=tomlify");
 
-    if(load_result || lua_pcall(lua, 0, 0, 0)) {
-        const char* error_msg = lua_tostring(lua, -1);
-        print_error(error_msg ? error_msg : "Unknown error in Lua execution");
+    if(LOAD_RESULT || lua_pcall(LUA, 0, 0, 0)) {
+        const char* const ERROR_MSG = lua_tostring(LUA, -1);
+        print_error(ERROR_MSG ? ERROR_MSG : "Unknown error in Lua execution");
         return 0;
     }
     return 1;
